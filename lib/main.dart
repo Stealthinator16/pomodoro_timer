@@ -1,163 +1,149 @@
 import 'package:flutter/material.dart';
-import 'dart:async';
-import 'package:audioplayers/audioplayers.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-const int totalSeconds = 25 * 60; // 25 minutes
+import 'storage_service.dart';
+import 'timer_page.dart';
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final prefs = await SharedPreferences.getInstance();
+  runApp(MyApp(storage: StorageService(prefs)));
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class MyApp extends StatefulWidget {
+  final StorageService storage;
+
+  const MyApp({super.key, required this.storage});
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Simple Timer',
-      theme: ThemeData.dark().copyWith( // Use a dark theme
-        scaffoldBackgroundColor: const Color(0xFF2c3e50),
-      ),
-      home: const TimerPage(),
-    );
-  }
+  State<MyApp> createState() => _MyAppState();
 }
 
-class TimerPage extends StatefulWidget {
-  const TimerPage({super.key});
+class _MyAppState extends State<MyApp> {
+  ThemeMode _currentThemeMode = ThemeMode.system;
 
-  @override
-  State<TimerPage> createState() => _TimerPageState();
-}
-
-class _TimerPageState extends State<TimerPage> with WidgetsBindingObserver {
-  int _remainingSeconds = totalSeconds;
-  bool _isActive = false;
-  Timer? _timer;
-  final AudioPlayer _audioPlayer = AudioPlayer();
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addObserver(this);
-    _resetTimer(); // Initialize timer state
-  }
-
- @override
- void didChangeAppLifecycleState(AppLifecycleState state) {
-     super.didChangeAppLifecycleState(state);
-     if (state == AppLifecycleState.resumed) {
-         // App came to foreground
-         print("App Resumed");
-          // Reset timer only if it wasn't running
-          if (!_isActive) {
-             setState(() {
-                  _resetTimer();
-             });
-          }
-     } else if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
-         // App went to background or became inactive
-         // Optional: You might want to pause the timer here if it's running
-         // if (_isActive) {
-         //   _pauseTimer();
-         // }
-     }
- }
-
-
-  void _resetTimer() {
-    _timer?.cancel(); // Cancel any existing timer
+  void _cycleThemeMode() {
     setState(() {
-      _remainingSeconds = totalSeconds;
-      _isActive = false;
-    });
-  }
-
-   void _pauseTimer() {
-     _timer?.cancel();
-     setState(() {
-         _isActive = false;
-     });
-   }
-
-
-  void _startTimer() {
-    if (_isActive || _remainingSeconds == 0) return; // Don't start if already active or finished
-
-    setState(() {
-      _isActive = true;
-    });
-
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (_remainingSeconds > 0) {
-        setState(() {
-          _remainingSeconds--;
-        });
+      if (_currentThemeMode == ThemeMode.system) {
+        _currentThemeMode = ThemeMode.light;
+      } else if (_currentThemeMode == ThemeMode.light) {
+        _currentThemeMode = ThemeMode.dark;
       } else {
-        _timer?.cancel();
-        setState(() {
-          _isActive = false;
-        });
-        _playSound();
-        // Optional: Auto-reset after sound plays
-        // Future.delayed(Duration(seconds: 3), () => _resetTimer());
+        _currentThemeMode = ThemeMode.system;
       }
     });
   }
 
-  Future<void> _playSound() async {
-    print('Playing sound');
-    try {
-      // For local assets, use AssetSource
-      await _audioPlayer.play(AssetSource('alarm.mp3')); // Assuming alarm.mp3 is in assets/
-      print('Sound played');
-    } catch (e) {
-      print("Error playing sound: $e");
-    }
-  }
-
-  String _formatTime(int seconds) {
-    final minutes = (seconds / 60).floor();
-    final secs = seconds % 60;
-    return '${minutes.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}';
-  }
-
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    _timer?.cancel(); // Clean up timer
-    _audioPlayer.dispose(); // Clean up audio player
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: GestureDetector(
-        onTap: _startTimer, // Start timer on tap
-        child: Center(
-          child: Container(
-            width: 300,
-            height: 300,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: const Color(0xFFecf0f1), // Light grey border
-                width: 5,
-              ),
-            ),
-            child: Center(
-              child: Text(
-                _formatTime(_remainingSeconds),
-                style: const TextStyle(
-                  fontSize: 70,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFFecf0f1), // Light grey text
-                ),
-              ),
+    // --- Light Palette ---
+    const lightCreamBg = Color(0xFFFFFBF5);
+    const lightPinkPrimary = Color(0xFFFFACC7);
+    const lightBrownText = Color(0xFF6D4C41);
+    const lightOnPrimary = Colors.white;
+    final lightBase = ThemeData.light().textTheme;
+
+    // --- Dark Palette ---
+    const darkIndigoBg = Color(0xFF242038);
+    const darkPinkPrimary = Color(0xFFF8BBD0);
+    const darkCreamText = Color(0xFFFDF9F3);
+    const darkOnPrimary = Color(0xFF242038);
+    final darkBase = ThemeData.dark().textTheme;
+
+    return MaterialApp(
+      title: 'Cute Pomo',
+      debugShowCheckedModeBanner: false,
+
+      // --- Light Theme ---
+      theme: ThemeData(
+        brightness: Brightness.light,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: lightPinkPrimary,
+          brightness: Brightness.light,
+          surface: lightCreamBg,
+          primary: lightPinkPrimary,
+          onSurface: lightBrownText,
+          onPrimary: lightOnPrimary,
+        ),
+        scaffoldBackgroundColor: lightCreamBg,
+        appBarTheme: AppBarTheme(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          iconTheme: IconThemeData(color: lightBrownText.withValues(alpha: 0.8)),
+          titleTextStyle: lightBase.titleLarge?.copyWith(
+            color: lightBrownText,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        textTheme: lightBase.apply(
+          bodyColor: lightBrownText,
+          displayColor: lightBrownText,
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: lightPinkPrimary,
+            foregroundColor: lightOnPrimary,
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
             ),
           ),
         ),
+        iconButtonTheme: IconButtonThemeData(
+          style: IconButton.styleFrom(
+            foregroundColor: lightBrownText.withValues(alpha: 0.8),
+          ),
+        ),
+      ),
+
+      // --- Dark Theme ---
+      darkTheme: ThemeData(
+        brightness: Brightness.dark,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: darkPinkPrimary,
+          brightness: Brightness.dark,
+          surface: darkIndigoBg,
+          primary: darkPinkPrimary,
+          onSurface: darkCreamText,
+          onPrimary: darkOnPrimary,
+        ),
+        scaffoldBackgroundColor: darkIndigoBg,
+        appBarTheme: AppBarTheme(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          iconTheme: IconThemeData(color: darkCreamText.withValues(alpha: 0.8)),
+          titleTextStyle: darkBase.titleLarge?.copyWith(
+            color: darkCreamText,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        textTheme: darkBase.apply(
+          bodyColor: darkCreamText,
+          displayColor: darkCreamText,
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: darkPinkPrimary,
+            foregroundColor: darkOnPrimary,
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        ),
+        iconButtonTheme: IconButtonThemeData(
+          style: IconButton.styleFrom(
+            foregroundColor: darkCreamText.withValues(alpha: 0.8),
+          ),
+        ),
+      ),
+
+      themeMode: _currentThemeMode,
+
+      home: TimerPage(
+        onThemeModePressed: _cycleThemeMode,
+        currentThemeMode: _currentThemeMode,
+        storage: widget.storage,
       ),
     );
   }

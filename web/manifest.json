@@ -1,11 +1,11 @@
 {
-    "name": "pomodoro_timer",
-    "short_name": "pomodoro_timer",
+    "name": "Cute Pomo",
+    "short_name": "Cute Pomo",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#FFFBF5",
+    "theme_color": "#FFACC7",
+    "description": "A cute Pomodoro timer with campus gallery gamification to keep you focused and motivated.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

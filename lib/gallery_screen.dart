@@ -112,6 +112,18 @@ class GalleryScreen extends StatelessWidget {
               },
             ),
           ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+            child: Text(
+              'Campus names are used for motivational purposes only. '
+              'This app is not affiliated with or endorsed by any listed institution.',
+              style: textTheme.bodySmall?.copyWith(
+                color: colors.onSurface.withValues(alpha: 0.4),
+                fontSize: 10,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
         ],
       ),
     );
